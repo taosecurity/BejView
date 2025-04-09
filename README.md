@@ -3,6 +3,8 @@
 ## Overview
 BejView is a Windows application designed for efficiently viewing and searching large text files. It uses memory-mapped files and virtualized rendering to handle files of any size with minimal memory usage.
 
+The limit appears to be the RAM of the system running BejView. I tested the program with a 26 GB text file on a system with 64 GB RAM.
+
 ## Features
 - Open and view large text files with minimal memory usage
 - Fast search functionality with context display
