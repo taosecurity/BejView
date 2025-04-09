@@ -53,6 +53,9 @@ BejView uses several optimization techniques to handle large files efficiently:
 - Caching of frequently accessed lines
 - Chunked processing for search operations
 
+## License
+MIT License
+
 ## Credits
 Developed by Richard Bejtlich using Visual Studio Code, Cline, OpenRouter.ai, and Claude 3.7.
 
