@@ -1,0 +1,124 @@
+# BejView - Development Guide
+
+## Project Structure
+The BejView application is structured as follows:
+
+- **MainForm.cs/MainForm.Designer.cs**: The main application window and UI components
+- **Program.cs**: Application entry point
+- **LargeFileHandler.cs**: Handles file operations using memory-mapped files
+- **VirtualizedTextDisplay.cs**: Custom control for efficiently rendering large text files
+- **LargeViewer.csproj**: Project configuration file (renamed internally to BejView)
+
+## Architecture Overview
+BejView uses a simple architecture with the following key components:
+
+1. **UI Layer** (MainForm): Handles user interactions and displays the file content
+2. **File Handling Layer** (LargeFileHandler): Manages file operations and search functionality
+3. **Rendering Layer** (VirtualizedTextDisplay): Efficiently renders only the visible portion of text files
+
+## Key Components
+
+### LargeFileHandler
+This class is responsible for:
+- Opening and reading large text files using memory-mapped files
+- Indexing line positions for fast navigation
+- Searching for text within files
+- Caching frequently accessed lines
+
+Key optimizations:
+- Uses memory-mapped files for efficient file access
+- Processes files in chunks to minimize memory usage
+- Maintains an index of line positions for fast navigation
+- Implements a line cache to improve performance for frequently accessed lines
+
+### VirtualizedTextDisplay
+This custom control:
+- Renders only the visible portion of the file
+- Handles scrolling and selection
+- Displays line numbers
+- Supports dark mode
+
+Key optimizations:
+- Only renders the visible portion of the file
+- Implements efficient scrolling
+- Uses double buffering for smooth rendering
+- Dynamically calculates line number column width
+
+### MainForm
+The main form:
+- Manages the UI components
+- Handles user interactions
+- Coordinates between the file handler and text display
+- Implements features like dark mode, search, and recent files
+
+## Development Guidelines
+
+### Adding New Features
+1. Identify the appropriate component for your feature
+2. Maintain the existing architecture and separation of concerns
+3. Follow the existing code style and patterns
+4. Add appropriate XML documentation comments
+5. Consider performance implications, especially for large files
+
+### Performance Considerations
+- Always consider the impact on memory usage
+- Avoid loading the entire file into memory
+- Use virtualization techniques for UI elements
+- Implement caching where appropriate
+- Process large files in chunks
+
+### UI Guidelines
+- Support both light and dark modes
+- Ensure keyboard shortcuts are consistent
+- Maintain accessibility features
+- Keep the UI responsive even when processing large files
+
+### Building and Testing
+1. Build the project using `dotnet build`
+2. Test with various file sizes, from small to very large (1GB+)
+3. Test search performance with complex patterns
+4. Verify memory usage remains reasonable with large files
+
+## Future Enhancements
+Potential areas for improvement:
+
+1. **File Encoding Detection**: Improve automatic detection of file encodings
+2. **Syntax Highlighting**: Add support for syntax highlighting for common file types
+3. **Split View**: Allow viewing multiple parts of a file simultaneously
+4. **Find and Replace**: Extend search functionality to include replace operations
+5. **Bookmarks**: Add ability to bookmark positions in files
+6. **Plugins**: Implement a plugin system for extensibility
+7. **Performance Optimizations**: Further optimize for very large files (10GB+)
+8. **Diff View**: Add ability to compare two files
+9. **Export/Print**: Add functionality to export or print file contents
+
+## Troubleshooting Common Issues
+
+| Issue | Possible Solution |
+|-------|-------------------|
+| High Memory Usage | Check for places where large portions of the file are loaded into memory |
+| Slow Search | Optimize regex patterns and chunk processing |
+| UI Freezes | Ensure long operations are performed asynchronously |
+| Rendering Issues | Check the virtualization logic in VirtualizedTextDisplay |
+
+## Code Style Guidelines
+- Use meaningful variable and method names
+- Add XML documentation comments for public methods and classes
+- Follow C# naming conventions
+- Keep methods focused on a single responsibility
+- Use async/await for potentially long-running operations
+
+## Pull Request Process
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add or update tests as necessary
+5. Ensure all tests pass
+6. Submit a pull request with a clear description of the changes
+
+## Development Environment Setup
+1. Install Visual Studio 2022 or later (or Visual Studio Code with C# extensions)
+2. Install .NET 9.0 SDK or later
+3. Clone the repository
+4. Open the solution file
+5. Build the solution
