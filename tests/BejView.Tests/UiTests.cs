@@ -362,7 +362,9 @@ public sealed class UiTests : IDisposable
         await Until(w, () => t.Main.Count == 300);
         Assert.True(t.Main.IsAtEnd);
         Assert.Equal(299, t.Main.VisibleRows[^1].Row);
-        Assert.Equal("Following", w.FindControl<TextBlock>("FollowText")!.Text);
+        // The status bar refreshes every third tick, so wait for it too (a slow CI runner got the lines in one tick).
+        var followText = w.FindControl<TextBlock>("FollowText")!;
+        await Until(w, () => followText.Text == "Following");
 
         // Scrolling up pauses the auto-scroll; new lines still arrive.
         var at = t.Main.TranslatePoint(new Point(200, 100), w)!.Value;
@@ -372,7 +374,7 @@ public sealed class UiTests : IDisposable
         Append(300, 50);
         await Until(w, () => t.Main.Count == 350);
         Assert.Equal(top, t.Main.TopRow);
-        Assert.Contains("paused", w.FindControl<TextBlock>("FollowText")!.Text);
+        await Until(w, () => followText.Text?.Contains("paused") == true);
 
         // Ctrl+E resumes.
         t.Main.Focus();
