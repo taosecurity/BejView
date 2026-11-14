@@ -20,6 +20,9 @@
     <ApplicationIcon>..\BejView.App\Assets\bejview.ico</ApplicationIcon>
     <!-- PerMonitorV2, for the Windows App Certification Kit's DPI check (beta 11). -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Native AOT picks the build machine's own runtime when none is given, so the lock file differed between Windows
+         (win-x64) and Linux (linux-x64) and CI's locked restore failed. Listing both keeps one lock file (step 6, 2026-11-14). -->
+    <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>

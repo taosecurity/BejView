@@ -13,6 +13,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- Every runtime BejView ships for, so the lock file covers each publish (step 4, 2026-11-13). -->
     <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64</RuntimeIdentifiers>
+    <!-- The release is published single-file, which turns on the single-file analyzer and with it the ILLink package.
+         On always, so a plain restore (CI's locked-mode test restore) and the publish restore agree (step 6, 2026-11-14). -->
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
   </PropertyGroup>
 
   <ItemGroup>
