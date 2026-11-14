@@ -1,0 +1,66 @@
+# Build and test BejView on Windows and Linux (step 5, 2026-11-13).
+# Runs on every push and pull request, and is called by release.yml before a release is built.
+# Actions are pinned to the commit of the release named in the comment (looked up 2026-11-13).
+name: CI
+
+on:
+  push:
+    branches: [main, v2]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      DOTNET_NOLOGO: "1"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: "10.0.x"
+
+      # Same as tools/wsl_test.sh: invariant globalization (BejView builds with it anyway), and fonts for the
+      # headless UI tests, which draw real text.
+      - name: Linux setup
+        if: runner.os == 'Linux'
+        run: |
+          echo "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1" >> "$GITHUB_ENV"
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fontconfig fonts-dejavu-core
+
+      # Lock files pin every package (packages.lock.json); --locked-mode fails if one would change.
+      - name: Restore
+        run: dotnet restore tests/BejView.Tests/BejView.Tests.csproj --locked-mode
+
+      - name: Test
+        run: dotnet test tests/BejView.Tests/BejView.Tests.csproj -c Release --no-restore --logger trx --results-directory TestResults
+
+      # The proof tests of the 1.0 code (Windows file sharing rules).
+      - name: Test (1.0 proof)
+        if: runner.os == 'Windows'
+        run: |
+          dotnet restore tests/BejView.LegacyProof/BejView.LegacyProof.csproj --locked-mode
+          dotnet test tests/BejView.LegacyProof/BejView.LegacyProof.csproj -c Release --no-restore --logger trx --results-directory TestResults
+
+      - name: Keep the test results
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-results-${{ matrix.os }}
+          path: TestResults
+          retention-days: 14

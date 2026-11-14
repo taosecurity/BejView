@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Benchmark: makes big test files and times 1.0 (its unchanged LargeFileHandler.cs) against the 2.0 Core.
+       Each measurement runs in its own process so peak memory is not shared. Not shipped. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1998;CS8618;CS8602;CS8604</NoWarn>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\legacy\winforms-1.0\LargeFileHandler.cs" Link="Legacy\LargeFileHandler.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BejView.Core\BejView.Core.csproj" />
+  </ItemGroup>
+
+</Project>

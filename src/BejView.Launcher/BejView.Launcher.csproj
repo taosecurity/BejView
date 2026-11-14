@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    BejView.com: the terminal helper (same approach as SquareSnap.com, 2026-11-13). BejView.exe is a windowed
+    program, so terminals don't wait for it and the output of info and find lands after the prompt. Typing "BejView"
+    (no extension) runs this console program instead, because Windows tries .com before .exe; it runs BejView.exe next
+    to it with the same arguments and, when the command prints to the terminal, waits and returns its exit code.
+    Published with Native AOT so it stays small; tools\make_beta_zip.py renames BejView.Launcher.exe to BejView.com.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>BejView.Launcher</AssemblyName>
+    <RootNamespace>BejView.Launcher</RootNamespace>
+    <PublishAot>true</PublishAot>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <StackTraceSupport>false</StackTraceSupport>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>..\BejView.App\Assets\bejview.ico</ApplicationIcon>
+    <!-- PerMonitorV2, for the Windows App Certification Kit's DPI check (beta 11). -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Only for CommandLine.Parse / UsesTerminal, so the helper waits exactly when BejView.exe uses the terminal. -->
+    <ProjectReference Include="..\BejView.Core\BejView.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BejView.Tests" />
+  </ItemGroup>
+
+</Project>

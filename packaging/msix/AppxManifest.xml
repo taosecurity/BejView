@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  BejView's Microsoft Store (MSIX) manifest (step 5, 2026-11-13). A template: tools\make_msix.py fills the {{...}}
+  values from packaging\store-identity.json and Directory.Build.props.
+  File-system write virtualization stays at Windows' default (the user's decision, 2026-11-13, following Microsoft:
+  turning it off is meant only for certain games). New files under %APPDATA% go to the package's private copy, which
+  uninstall removes; files that already exist there are changed in place (Windows 10 1903 and later). BejView shows
+  and opens wherever each file really is (AppPaths.RealLocation).
+  One application (beta 11: the certification kit's "Application count" test wants one): the window, BejView.exe, in
+  the Start menu. Its app execution alias "bejview" names the terminal helper (BejView.Launcher.exe, the same helper as
+  BejView.com in the zip) as a console program, so terminals wait for info, find and paths. The Store build has no
+  self-update: the Store updates it.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap5 desktop4 rescap">
+
+  <Identity Name="{{IdentityName}}" Publisher="{{Publisher}}" Version="{{Version}}" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>BejView</DisplayName>
+    <PublisherDisplayName>{{PublisherDisplayName}}</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <Description>View and search very large text files. Read-only: it never changes a file.</Description>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <!-- A console alias needs SupportsMultipleInstances on its application (makeappx refuses it otherwise): every terminal
+         gets its own helper. The window is multi-instance anyway, as a full-trust app. -->
+    <Application Id="BejView" Executable="BejView.exe" EntryPoint="Windows.FullTrustApplication"
+      desktop4:SupportsMultipleInstances="true">
+      <uap:VisualElements DisplayName="BejView" Description="View and search very large text files"
+        BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <!-- "Open with > BejView" in Explorer for common text and log files. It never makes BejView the default. -->
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="textfiles">
+            <uap:DisplayName>Text file</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.log</uap:FileType>
+              <uap:FileType>.txt</uap:FileType>
+              <uap:FileType>.csv</uap:FileType>
+              <uap:FileType>.tsv</uap:FileType>
+              <uap:FileType>.json</uap:FileType>
+              <uap:FileType>.jsonl</uap:FileType>
+              <uap:FileType>.xml</uap:FileType>
+              <uap:FileType>.md</uap:FileType>
+              <uap:FileType>.ini</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+        <!-- "bejview" in any terminal runs the helper (its own Executable on the extension; the schema lets an extension
+             name another exe than its application's). -->
+        <uap5:Extension Category="windows.appExecutionAlias" Executable="BejView.Launcher.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap5:AppExecutionAlias desktop4:Subsystem="console">
+            <uap5:ExecutionAlias Alias="bejview.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

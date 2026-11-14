@@ -1,0 +1,11 @@
+# BejView benchmark 2026-11-11 10:14 on VM24, 12 logical CPUs
+# warm cache: each file is read once before timing (both versions then read from the OS file cache)
+mode=gen file=C:/temp/bejview-bench/bench-1024MB.log bytes=1073741895 lines=7848652
+mode=new bytes=1073741895 lines=7848652 index_s=0.20 index_mb=1.0 last_screen_ms=1.6 mid_screen_ms=0.2 search_ignorecase_s=0.12 hits=156 search_case_s=0.11 search_case_1thread_s=0.17 peak_ws_mb=61 peak_private_mb=44 total_s=0.61 first_line_ok=True
+mode=legacy bytes=1073741895 lines=7848653 index_s=1.44 last_screen_ms=1.2 search_ignorecase_s=1.20 hits=156 peak_ws_mb=2322 peak_private_mb=2238 total_s=2.65
+mode=gen file=C:/temp/bejview-bench/bench-10240MB.log bytes=10737418247 lines=78481249
+mode=new bytes=10737418247 lines=78481249 index_s=1.74 index_mb=5.0 last_screen_ms=1.7 mid_screen_ms=0.2 search_ignorecase_s=1.26 hits=1569 search_case_s=1.21 search_case_1thread_s=1.25 peak_ws_mb=81 peak_private_mb=62 total_s=5.48 first_line_ok=True
+mode=legacy bytes=10737418247 lines=78481250 index_s=11.32 last_screen_ms=1.3 search_ignorecase_s=10.74 hits=1569 peak_ws_mb=11876 peak_private_mb=4391 total_s=22.07
+mode=gen file=C:/temp/bejview-bench/bench-30720MB.log bytes=32212254768 lines=235436873
+mode=new bytes=32212254768 lines=235436873 index_s=4.70 index_mb=15.0 last_screen_ms=1.2 mid_screen_ms=0.2 search_ignorecase_s=2.78 hits=4708 search_case_s=2.68 search_case_1thread_s=2.92 peak_ws_mb=105 peak_private_mb=88 total_s=13.09 first_line_ok=True
+mode=legacy bytes=32212254768 lines=235436874 index_s=29.35 last_screen_ms=1.2 search_ignorecase_s=28.08 hits=4708 peak_ws_mb=34578 peak_private_mb=15398 total_s=57.43

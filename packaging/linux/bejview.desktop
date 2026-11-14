@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=BejView
+GenericName=Large Text File Viewer
+Comment=View and search very large text files and live logs (read-only)
+Exec=bejview %f
+Icon=bejview
+Terminal=false
+Categories=Utility;TextTools;
+MimeType=text/plain;text/x-log;
+Keywords=log;tail;viewer;large;text;search;
+StartupWMClass=BejView

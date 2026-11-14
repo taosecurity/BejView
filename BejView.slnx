@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/BejView.Core/BejView.Core.csproj" />
+    <Project Path="src/BejView.App/BejView.App.csproj" />
+    <Project Path="src/BejView.Launcher/BejView.Launcher.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BejView.Tests/BejView.Tests.csproj" />
+    <Project Path="tests/BejView.LegacyProof/BejView.LegacyProof.csproj" />
+  </Folder>
+  <Folder Name="/bench/">
+    <Project Path="bench/BejView.Bench/BejView.Bench.csproj" />
+  </Folder>
+</Solution>

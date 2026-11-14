@@ -47,3 +47,15 @@ bld/
 # NuGet v3's project.json files produces more ignorable files
 *.nuget.props
 *.nuget.targets
+
+# BejView 2.0 release staging
+dist/
+
+# Python bytecode (tools/make_msix.py imports tools/make_icon.py)
+__pycache__/
+
+# Private working files: tracked on the local v2 branch only, never in the public main (step 6, 2026-11-14)
+NOTES.md
+PLAN.md
+STEP*-PROMPT.md
+testplan/

@@ -1,0 +1,108 @@
+# Build a BejView release when a version tag (v2.0.0, v2.0.0-beta.10, ...) is pushed (step 5, 2026-11-13).
+# 1. The CI tests run on Windows and Linux (ci.yml).
+# 2. On Windows, tools/make_beta_zip.py publishes and checks every program and writes the packages and SHA256SUMS:
+#    BejView-<v>-win-x64.zip, BejView-<v>-win-x64-winget.zip, BejView-<v>-linux-x64.tar.gz, -linux-arm64.tar.gz.
+# 3. A build-provenance attestation is made for each package (gh attestation verify <file> -R taosecurity/BejView).
+# 4. A DRAFT GitHub release is created with the packages and SHA256SUMS; publishing it stays a person's click.
+# The Store package (unsigned MSIX) is kept as a workflow artifact for the Partner Center upload, not on the release.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: test
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write      # create the draft release
+      id-token: write      # sign the attestation
+      attestations: write  # store the attestation
+    env:
+      DOTNET_NOLOGO: "1"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Check the tag matches Directory.Build.props
+        id: version
+        shell: pwsh
+        run: |
+          $v = (Select-Xml -Path Directory.Build.props -XPath '//Version').Node.InnerText
+          if ("v$v" -ne $env:GITHUB_REF_NAME) { throw "Tag $env:GITHUB_REF_NAME doesn't match <Version>$v</Version> in Directory.Build.props." }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          "prerelease=$(if ($v -match '-') { 'true' } else { 'false' })" >> $env:GITHUB_OUTPUT
+
+      # Same script as the beta builds (Native AOT for the helper uses the runner's Visual Studio C++ tools).
+      - name: Build the packages
+        run: python -I tools/make_beta_zip.py
+
+      - name: List the packages
+        shell: pwsh
+        run: |
+          Get-ChildItem dist -File | Format-Table Name, Length -AutoSize
+          Get-Content dist/SHA256SUMS
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/BejView-${{ steps.version.outputs.version }}-win-x64.zip
+            dist/BejView-${{ steps.version.outputs.version }}-win-x64-winget.zip
+            dist/BejView-${{ steps.version.outputs.version }}-linux-x64.tar.gz
+            dist/BejView-${{ steps.version.outputs.version }}-linux-arm64.tar.gz
+
+      - name: Create the draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          $files = @(
+            "dist/BejView-$env:VERSION-win-x64.zip",
+            "dist/BejView-$env:VERSION-win-x64-winget.zip",
+            "dist/BejView-$env:VERSION-linux-x64.tar.gz",
+            "dist/BejView-$env:VERSION-linux-arm64.tar.gz",
+            "dist/SHA256SUMS")
+          $notes = @"
+          BejView $env:VERSION. Draft made by the release workflow; edit these notes before publishing.
+
+          Downloads: Windows (x64) ``BejView-$env:VERSION-win-x64.zip``; Linux ``BejView-$env:VERSION-linux-x64.tar.gz`` or ``-linux-arm64.tar.gz``. The ``-winget.zip`` is the same Windows build laid out for WinGet.
+
+          Check a download: ``sha256sum -c SHA256SUMS --ignore-missing`` (Linux) or ``Get-FileHash <file>`` (Windows), and ``gh attestation verify <file> -R $env:GITHUB_REPOSITORY``.
+          "@
+          $flags = @("--draft", "--verify-tag", "--title", "BejView $env:VERSION", "--notes", $notes)
+          if ($env:PRERELEASE -eq 'true') { $flags += "--prerelease" }
+          gh release create $env:GITHUB_REF_NAME @files @flags
+
+      # The Store package: unsigned (Partner Center signs it), with Windows' default virtualization (PLAN.md).
+      - name: Build the Store package
+        run: |
+          python -m pip install --disable-pip-version-check pillow==13.0.0
+          python -I tools/make_msix.py
+
+      - name: Keep the Store package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: msix-${{ steps.version.outputs.version }}
+          path: dist/msix/*.msix
+          retention-days: 30

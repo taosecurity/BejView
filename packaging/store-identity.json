@@ -1,0 +1,11 @@
+{
+  "_comment": "Microsoft Store identity for BejView, from Partner Center > BejView > Application overview > View product identity (screenshot 2026-11-13 11:53). Used by the MSIX manifest in step 5. Not secret: these values are public in every Store package. Same developer account and Publisher as SquareSnap.",
+  "IdentityName": "RichardBejtlich.BejView",
+  "Publisher": "CN=58B8B65E-31C5-4B4D-8321-9980C783395B",
+  "PublisherDisplayName": "Richard Bejtlich",
+  "PackageFamilyName": "RichardBejtlich.BejView_kz4qzpv342p6y",
+  "StoreId": "9PMXP946XKN3",
+  "ReservedName": "BejView",
+  "ProductType": "MSIX or PWA app",
+  "Recorded": "2026-11-13"
+}

@@ -1,0 +1,3 @@
+# Linux files keep LF line endings on every checkout (core.autocrlf would make them CRLF, and a CRLF script won't run).
+*.sh       text eol=lf
+*.desktop  text eol=lf

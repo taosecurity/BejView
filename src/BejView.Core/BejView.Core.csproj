@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Everything that isn't UI: file reading, the line index, encodings, search, settings, logging, command line, WSL paths.
+       No UI here, so all of it is unit-tested on Windows and Linux alike. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>BejView.Core</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <!-- The kernel32 import in PackageIdentity is source-generated and needs unsafe code (as in the App and Launcher). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Every runtime BejView ships for, so the lock file covers each publish (step 4, 2026-11-13). -->
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BejView.Tests" />
+  </ItemGroup>
+
+</Project>

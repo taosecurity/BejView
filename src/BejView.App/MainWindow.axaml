@@ -1,0 +1,105 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BejView.App.MainWindow"
+        Title="BejView"
+        Width="1100" Height="720" MinWidth="520" MinHeight="320"
+        WindowStartupLocation="CenterScreen"
+        DragDrop.AllowDrop="True"
+        Icon="avares://BejView/Assets/bejview.ico">
+
+  <!-- Fluent's tab headers are sized for a few big tabs; files and panes want compact ones. -->
+  <Window.Resources>
+    <x:Double x:Key="TabItemHeaderFontSize">14</x:Double>
+    <x:Double x:Key="TabItemMinHeight">30</x:Double>
+    <x:Double x:Key="TabItemHeaderMinHeight">30</x:Double>
+  </Window.Resources>
+
+  <DockPanel>
+    <Menu x:Name="MainMenu" DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="_Open..." InputGesture="Ctrl+O" Click="Open_Click" />
+        <MenuItem x:Name="RecentMenu" Header="Open _recent" />
+        <Separator />
+        <MenuItem Header="_Reload (look for new lines)" InputGesture="F5" Click="Reload_Click" />
+        <MenuItem Header="_Save selection as..." InputGesture="Ctrl+S" Click="SaveSelection_Click" />
+        <Separator />
+        <MenuItem Header="_Close tab" InputGesture="Ctrl+W" Click="CloseTab_Click" />
+        <MenuItem Header="E_xit" Click="Exit_Click" />
+      </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="_Copy" InputGesture="Ctrl+C" Click="Copy_Click" />
+        <MenuItem Header="Copy lines with _numbers" InputGesture="Ctrl+Shift+C" Click="CopyNumbered_Click" />
+        <MenuItem Header="Select _all" InputGesture="Ctrl+A" Click="SelectAll_Click" />
+        <Separator />
+        <MenuItem Header="_Find..." InputGesture="Ctrl+F" Click="Find_Click" />
+        <MenuItem Header="Find _next" InputGesture="Ctrl+N" Click="FindNext_Click" />
+        <MenuItem Header="Find _previous" InputGesture="Ctrl+P" Click="FindPrevious_Click" />
+        <MenuItem Header="Show _matching lines (filter)" InputGesture="Ctrl+Shift+M" Click="FilterMatching_Click" />
+        <MenuItem Header="Show _other lines (filter)" InputGesture="Ctrl+Shift+O" Click="FilterOther_Click" />
+        <MenuItem Header="Cancel search or filter" InputGesture="Escape" Click="Cancel_Click" />
+        <Separator />
+        <MenuItem x:Name="LimitMenu" Header="Result _limit" />
+      </MenuItem>
+      <MenuItem Header="_Go">
+        <MenuItem Header="_Go to line, % or byte..." InputGesture="Ctrl+G" Click="GoTo_Click" />
+        <MenuItem Header="_Beginning of file" InputGesture="Ctrl+B" Click="Begin_Click" />
+        <MenuItem Header="_End of file" InputGesture="Ctrl+E" Click="End_Click" />
+        <Separator />
+        <MenuItem Header="_Toggle bookmark" InputGesture="Ctrl+F2" Click="ToggleBookmark_Click" />
+        <MenuItem Header="Ne_xt bookmark" InputGesture="F2" Click="NextBookmark_Click" />
+        <MenuItem Header="Pre_vious bookmark" InputGesture="Shift+F2" Click="PrevBookmark_Click" />
+        <MenuItem Header="C_lear bookmarks" Click="ClearBookmarks_Click" />
+      </MenuItem>
+      <MenuItem Header="_View">
+        <MenuItem x:Name="FollowOpt" Header="_Follow the end of the file (tail)" InputGesture="Ctrl+L" ToggleType="CheckBox" Click="Follow_Click" />
+        <MenuItem x:Name="FollowDefaultOpt" Header="Follow every file when it opens" ToggleType="CheckBox" Click="Toggle_Click" />
+        <Separator />
+        <MenuItem x:Name="WrapOpt" Header="_Word wrap" InputGesture="Alt+Z" ToggleType="CheckBox" Click="Toggle_Click" />
+        <MenuItem x:Name="NumbersOpt" Header="_Line numbers" ToggleType="CheckBox" Click="Toggle_Click" />
+        <MenuItem Header="_Highlight rules">
+          <MenuItem x:Name="HighlightOpt" Header="_Colour lines with the rules" ToggleType="CheckBox" Click="Toggle_Click" />
+          <MenuItem x:Name="PresetMenu" Header="Use a _preset" />
+          <MenuItem Header="_Edit the rules..." Click="EditRules_Click" />
+        </MenuItem>
+        <Separator />
+        <MenuItem x:Name="DarkOpt" Header="_Dark mode" InputGesture="Ctrl+D" ToggleType="CheckBox" Click="Toggle_Click" />
+        <MenuItem x:Name="FontMenu" Header="F_ont" />
+        <MenuItem Header="_Bigger text   (Ctrl++)" Click="Bigger_Click" />
+        <MenuItem Header="_Smaller text   (Ctrl+-)" Click="Smaller_Click" />
+        <MenuItem Header="_Normal size   (Ctrl+0)" Click="NormalSize_Click" />
+      </MenuItem>
+      <MenuItem x:Name="EncodingMenu" Header="E_ncoding" />
+      <MenuItem Header="_Help">
+        <MenuItem Header="_Keyboard shortcuts" InputGesture="F1" Click="Keys_Click" />
+        <MenuItem Header="Open the _log file" Click="OpenLog_Click" />
+        <MenuItem Header="Open the _settings folder" Click="OpenSettings_Click" />
+        <MenuItem Header="_Read Me (opens GitHub)" Click="ReadMe_Click" />
+        <Separator />
+        <MenuItem Header="_About BejView" Click="About_Click" />
+      </MenuItem>
+    </Menu>
+
+    <Border DockPanel.Dock="Bottom" Padding="8,3" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="14">
+          <TextBlock x:Name="FollowText" VerticalAlignment="Center" FontWeight="SemiBold" />
+          <TextBlock x:Name="CaretText" VerticalAlignment="Center" Opacity="0.85" />
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <ProgressBar x:Name="IndexBar" Width="110" Minimum="0" Maximum="1" VerticalAlignment="Center" IsVisible="False" />
+            <TextBlock x:Name="LinesText" VerticalAlignment="Center" />
+          </StackPanel>
+          <TextBlock x:Name="EncodingText" VerticalAlignment="Center" Opacity="0.85" />
+          <TextBlock x:Name="RamText" VerticalAlignment="Center" Opacity="0.85" />
+        </StackPanel>
+        <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,14,0" />
+      </DockPanel>
+    </Border>
+
+    <Grid>
+      <TabControl x:Name="Tabs" Padding="0" />
+      <TextBlock x:Name="EmptyHint" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Opacity="0.7"
+                 TextWrapping="Wrap" MaxWidth="460"
+                 Text="Open a file with File > Open (Ctrl+O), or drag files here.&#10;&#10;BejView never changes the files it shows. Live logs can stay open while the program writing them keeps going." />
+    </Grid>
+  </DockPanel>
+</Window>
