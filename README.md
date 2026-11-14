@@ -142,6 +142,10 @@ See [DEVELOPMENT.md](DEVELOPMENT.md). In short: .NET 10 SDK, then `dotnet test` 
 
 See [CHANGELOG.md](CHANGELOG.md).
 
+## Privacy
+
+BejView collects nothing, sends nothing and connects to nothing: [PRIVACY.md](PRIVACY.md).
+
 ## Security
 
 What BejView promises (it only reads, has no network access, and keeps a file's escape codes away from your terminal) and how to report a problem privately: [SECURITY.md](SECURITY.md).
