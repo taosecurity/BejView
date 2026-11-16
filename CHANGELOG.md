@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0.1 (2026-11-16)
+
+Bug fixes from a code review of the 2.0.0 source.
+
+- Regex searches with `$` (end of line) now find matches in Windows (CRLF) files, such as most game and Vortex logs.
+- Follow mode: a log that is rotated but starts with the same long header every time is now followed to the new file; a file opened empty and later rewritten in place is read again; the Filter pane is cleared when the file is read again, instead of listing the old file's line numbers.
+- A search, or Save selection, that runs while a followed log is rotated reads the file it started on, not the new one at the old offsets.
+- Follow mode no longer can stop drawing when a line over 64 KB is cut short under it.
+- `--encoding` applies to the file given on the command line only; files opened later are detected again.
+- Closing a tab, or changing its encoding, while follow mode is reading no longer logs an "Unexpected background error".
+- A Go to that was waiting for indexing is no longer dropped silently when indexing stops: BejView goes to the last line read and says so.
+- Faster column numbers when one long line has many search hits.
+
 ## 2.0.0 (2026-11-14)
 
 A rewrite of BejView on .NET 10 and Avalonia, for Windows and Linux. It replaces 1.0 and takes over 1.0's recent-files list the first time it starts on Windows.

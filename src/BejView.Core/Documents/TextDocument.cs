@@ -169,6 +169,7 @@ public sealed class TextDocument : IDisposable
             ScanToEnd(null, ct);
             return RefreshResult.Reindexed;
         }
+        ExtendFingerprint(len);
         if (AlignedLength(len) <= before) return RefreshResult.Unchanged;
         ScanToEnd(null, ct);
         return RefreshResult.Grew;
@@ -182,8 +183,11 @@ public sealed class TextDocument : IDisposable
     /// it keeps showing the old one. The start of a log never changes while it grows, so a writer appending can't
     /// cause a false switch.
     /// </summary>
+    private long _heldLength;
+
     private bool SwitchIfRotated()
     {
+        _heldLength = Source.RefreshLength();
         FileSource fresh;
         try
         {
@@ -199,7 +203,10 @@ public sealed class TextDocument : IDisposable
         Span<byte> theirs = stackalloc byte[FingerprintBytes];
         int n = current.Read(0, ours);
         int m = fresh.Read(0, theirs);
-        if (m >= n && theirs[..n].SequenceEqual(ours[..n]))
+        // The open handle's length was read before the name was opened again (heldLength), so a writer appending in
+        // between can only make the fresh file longer. A shorter file under the name is another file even when its
+        // first bytes match (a log that starts with the same long header every time).
+        if (m >= n && theirs[..n].SequenceEqual(ours[..n]) && fresh.Length >= _heldLength)
         {
             fresh.Dispose();
             return false;
@@ -207,6 +214,16 @@ public sealed class TextDocument : IDisposable
         lock (_retired) _retired.Add(current);
         Source = fresh;
         return true;
+    }
+
+    /// <summary>A file opened empty or tiny has a short fingerprint; take more of its start as it grows (the start
+    /// was just checked to match), so a later rewrite in place is still seen.</summary>
+    private void ExtendFingerprint(long len)
+    {
+        if (_fingerprint.Length >= FingerprintBytes || len <= _fingerprint.Length) return;
+        byte[] head = new byte[(int)Math.Min(FingerprintBytes, len)];
+        int n = Source.Read(0, head);
+        if (n > _fingerprint.Length) _fingerprint = head.AsSpan(0, n).ToArray();
     }
 
     private bool StartMatchesFingerprint()
@@ -298,7 +315,14 @@ public sealed class TextDocument : IDisposable
                 else
                 {
                     textBytes = Math.Min(n, MaxLineBytes);
-                    next = line + 1 < lines ? index.LineStart(line + 1) : scanned;
+                    try
+                    {
+                        next = line + 1 < lines ? index.LineStart(line + 1) : scanned;
+                    }
+                    catch (FileChangedUnderIndexException)
+                    {
+                        break; // cut short under a long line: keep the lines read so far, the next refresh reads again
+                    }
                     truncated = true;
                 }
 
@@ -331,8 +355,9 @@ public sealed class TextDocument : IDisposable
         byte[] buffer = ArrayPool<byte>.Shared.Rent((int)Math.Max(rel, 1));
         try
         {
-            int n = Source.Read(line.ByteStart, buffer.AsSpan(0, (int)rel));
-            int col = Encoding.Encoding.GetCharCount(buffer, 0, n);
+            var index = Index;
+            int n = index.Source.Read(line.ByteStart, buffer.AsSpan(0, (int)rel));
+            int col = index.Encoding.Encoding.GetCharCount(buffer, 0, n);
             return col <= line.Text.Length ? col : -1;
         }
         finally
@@ -350,7 +375,8 @@ public sealed class TextDocument : IDisposable
     {
         column = Math.Clamp(column, 0, line.Text.Length);
         if (column == 0) return line.ByteStart;
-        switch (Encoding.Kind)
+        var index = Index;   // the lines on screen come from this index, so read its file in its encoding
+        switch (index.Encoding.Kind)
         {
             case TextEncodingKind.Utf16LE or TextEncodingKind.Utf16BE: return line.ByteStart + 2L * column;
             case TextEncodingKind.Latin1: return line.ByteStart + column;
@@ -360,7 +386,7 @@ public sealed class TextDocument : IDisposable
         byte[] buffer = ArrayPool<byte>.Shared.Rent(Math.Max(max, 1));
         try
         {
-            int n = Source.Read(line.ByteStart, buffer.AsSpan(0, max));
+            int n = index.Source.Read(line.ByteStart, buffer.AsSpan(0, max));
             var bytes = buffer.AsSpan(0, n);
             int pos = 0, chars = 0;
             while (chars < column && pos < bytes.Length)
@@ -383,8 +409,11 @@ public sealed class TextDocument : IDisposable
     /// </summary>
     public long CopyBytes(long start, long end, Stream destination, IProgress<long>? progress = null, CancellationToken ct = default)
     {
+        // The selection's offsets come from the index on screen: copy from that index's file, which after a log
+        // rotation is still the old one until the view switches.
+        var src = Index.Source;
         start = Math.Max(0, start);
-        end = Math.Min(end, Source.Length);
+        end = Math.Min(end, src.Length);
         byte[] buffer = ArrayPool<byte>.Shared.Rent(1 << 20);
         long copied = 0;
         try
@@ -393,7 +422,7 @@ public sealed class TextDocument : IDisposable
             {
                 ct.ThrowIfCancellationRequested();
                 int want = (int)Math.Min(buffer.Length, end - pos);
-                int n = Source.Read(pos, buffer.AsSpan(0, want));
+                int n = src.Read(pos, buffer.AsSpan(0, want));
                 if (n <= 0) break;
                 destination.Write(buffer, 0, n);
                 pos += n;

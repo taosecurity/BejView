@@ -97,7 +97,7 @@ public partial class MainWindow : Window
         DocumentTab tab;
         try
         {
-            tab = await DocumentTab.OpenAsync(_s, full, encoding ?? _s.Options.Encoding);
+            tab = await DocumentTab.OpenAsync(_s, full, encoding);
         }
         catch (FileOpenException ex)
         {
@@ -135,7 +135,8 @@ public partial class MainWindow : Window
     {
         var o = _s.Options;
         if (o.File == null) return;
-        var tab = await OpenFileAsync(o.File);
+        // --encoding is for the command-line file only; files opened later are detected (or picked in the menu).
+        var tab = await OpenFileAsync(o.File, o.Encoding);
         if (tab == null) return;
         if (o.Follow) tab.SetFollow(true);
         if (o.Line is { } line) tab.GoTo(new GoToTarget(GoToKind.Line, line));

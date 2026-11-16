@@ -1,6 +1,6 @@
 # BejView: instructions for AI assistants
 
-These steps let an assistant install BejView and use it for a person. Every command below was run once before the 2.0.0 release.
+These steps let an assistant install BejView and use it for a person. Every command below was run once before the 2.0.0 release and checked again for 2.0.1.
 
 ## 1. What it is for
 
@@ -20,7 +20,7 @@ Windows, any one of these:
 
 ```powershell
 # a) The release zip, extracted to a folder of your choice
-Invoke-WebRequest https://github.com/taosecurity/BejView/releases/download/v2.0.0/BejView-2.0.0-win-x64.zip -OutFile BejView.zip
+Invoke-WebRequest https://github.com/taosecurity/BejView/releases/download/v2.0.1/BejView-2.0.1-win-x64.zip -OutFile BejView.zip
 Expand-Archive BejView.zip -DestinationPath "$env:LOCALAPPDATA\BejView-app"
 # b) WinGet, once the package is accepted (adds the "bejview" command to PATH)
 winget install taosecurity.BejView
@@ -31,9 +31,9 @@ winget install --id 9PMXP946XKN3 --source msstore
 Linux:
 
 ```sh
-curl -LO https://github.com/taosecurity/BejView/releases/download/v2.0.0/BejView-2.0.0-linux-x64.tar.gz
-tar -xzf BejView-2.0.0-linux-x64.tar.gz
-cd BejView-2.0.0-linux-x64
+curl -LO https://github.com/taosecurity/BejView/releases/download/v2.0.1/BejView-2.0.1-linux-x64.tar.gz
+tar -xzf BejView-2.0.1-linux-x64.tar.gz
+cd BejView-2.0.1-linux-x64
 ./install.sh            # optional: copies bejview to ~/.local/bin and adds a menu entry (no sudo)
 ```
 
@@ -42,11 +42,11 @@ On Windows, call the zip's terminal helper as `BejView` (in PowerShell, `.\BejVi
 ## 4. Prove the install works
 
 ```powershell
-& "$env:LOCALAPPDATA\BejView-app\BejView.com" --version     # Windows zip: prints "BejView 2.0.0", exit 0
+& "$env:LOCALAPPDATA\BejView-app\BejView.com" --version     # Windows zip: prints "BejView 2.0.1", exit 0
 ```
 
 ```sh
-./bejview --version                                          # Linux: prints "BejView 2.0.0", exit 0
+./bejview --version                                          # Linux: prints "BejView 2.0.1", exit 0
 ```
 
 ## 5. Common tasks

@@ -71,6 +71,7 @@ internal sealed class DocumentTab : UserControl
 
     private int _followTicks;
     private bool _refreshing;
+    private Task? _refreshTask;   // the document's refresh in flight (follow mode or F5), awaited before closing
     private GoToTarget? _pendingGoTo;
     private long _saveProgress = -1;
     private bool _closed;
@@ -272,6 +273,14 @@ internal sealed class DocumentTab : UserControl
         {
             Say($"{Title}: {Doc.LineCount:N0} lines, {CliCommands.FormatSize(Doc.Length)}, indexed in {_indexClock.Elapsed.TotalSeconds:F1} s.");
         }
+        if (_pendingGoTo is { } pending && (t.IsFaulted || t.IsCanceled))
+        {
+            // Indexing stopped before it reached the target: go as far as it got, and say so.
+            _pendingGoTo = null;
+            long last = Math.Max(0, Doc.LineCount - 1);
+            ShowLine(last, focusMain: true);
+            Say($"Couldn't go to {pending}: reading stopped first. Showing the last line read ({last + 1:N0}).", error: t.IsFaulted);
+        }
         if (Following && AutoScroll) Main.ScrollToEnd();
     }
 
@@ -337,7 +346,9 @@ internal sealed class DocumentTab : UserControl
         var doc = Doc;
         try
         {
-            var r = await doc.RefreshAsync();
+            var task = doc.RefreshAsync();
+            _refreshTask = task;
+            var r = await task;
             if (!ReferenceEquals(doc, Doc) || _closed) return;
             switch (r)
             {
@@ -350,12 +361,15 @@ internal sealed class DocumentTab : UserControl
                 case RefreshResult.Reindexed:
                     CancelWork();
                     ClearResults();
+                    _filterRanges = new LineRanges();   // its line numbers were the old file's
+                    FilterView.Source = new RangesSource(Doc, _filterRanges);
+                    _filterStatus.Text = "";
                     Bookmarks.TrimTo(Doc.LineCount);
                     Main.Refresh(reset: true);
                     Results.Refresh(reset: true);
                     FilterView.Refresh(reset: true);
                     if (Following && AutoScroll) Main.ScrollToEnd();
-                    Say($"{Title} got shorter or was replaced (a new log?), so it was read again from the start. Search results were cleared.");
+                    Say($"{Title} got shorter or was replaced (a new log?), so it was read again from the start. Search and filter results were cleared.");
                     break;
                 default:
                     if (!fromFollow) Say($"{Title} hasn't changed.");
@@ -1006,6 +1020,9 @@ internal sealed class DocumentTab : UserControl
         _indexCts?.Cancel();
         CancelWork();
         try { await _indexTask; } catch (Exception) { /* cancelled or failed; reported already */ }
+        // A follow-mode refresh may still be reading the file: let it finish before the document is disposed.
+        if (_refreshTask is { } rt)
+            try { await rt; } catch (Exception) { /* reported by RefreshAsync, or the file went away */ }
         await StopSearchAsync();
         await StopFilterAsync();
         IsIndexing = false;

@@ -1,7 +1,7 @@
 <Project>
   <!-- Shared settings for every BejView 2.x project. legacy/ is the 1.0 WinForms app and is not built. -->
   <PropertyGroup>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <Authors>Richard Bejtlich</Authors>
     <Copyright>Copyright (c) Richard Bejtlich</Copyright>
     <Product>BejView</Product>

@@ -8,7 +8,7 @@ For AI assistants: see [AGENTS.md](AGENTS.md).
 
 ## Try it
 
-Windows: download `BejView-2.0.0-win-x64.zip` from [Releases](https://github.com/taosecurity/BejView/releases), extract it anywhere, and double-click `BejView.exe`. Or, from PowerShell in that folder:
+Windows: download `BejView-2.0.1-win-x64.zip` from [Releases](https://github.com/taosecurity/BejView/releases), extract it anywhere, and double-click `BejView.exe`. Or, from PowerShell in that folder:
 
 ```powershell
 .\BejView --version
@@ -18,8 +18,8 @@ Windows: download `BejView-2.0.0-win-x64.zip` from [Releases](https://github.com
 Linux:
 
 ```sh
-tar -xzf BejView-2.0.0-linux-x64.tar.gz
-cd BejView-2.0.0-linux-x64
+tar -xzf BejView-2.0.1-linux-x64.tar.gz
+cd BejView-2.0.1-linux-x64
 ./bejview --version
 ./bejview /var/log/syslog --follow
 ```
@@ -52,10 +52,10 @@ Every release lists SHA-256 hashes in `SHA256SUMS` and carries a GitHub build at
 
 ```sh
 sha256sum -c SHA256SUMS --ignore-missing         # Linux
-gh attestation verify BejView-2.0.0-linux-x64.tar.gz -R taosecurity/BejView
+gh attestation verify BejView-2.0.1-linux-x64.tar.gz -R taosecurity/BejView
 ```
 
-On Windows, compare `Get-FileHash BejView-2.0.0-win-x64.zip` with the line in `SHA256SUMS`.
+On Windows, compare `Get-FileHash BejView-2.0.1-win-x64.zip` with the line in `SHA256SUMS`.
 
 BejView 2.0 replaces 1.0. The first time it starts on Windows it takes over 1.0's recent-files list.
 

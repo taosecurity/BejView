@@ -3,7 +3,7 @@
      Certification Kit warns about any exe in the Store package that doesn't declare DPI awareness, so it says PerMonitorV2
      like BejView.exe. -->
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
-  <assemblyIdentity version="2.0.0.0" name="BejView.Launcher"/>
+  <assemblyIdentity version="2.0.1.0" name="BejView.Launcher"/>
 
   <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
     <application>

@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Text.Unicode;
 using BejView.Core.Documents;
+using BejView.Core.Index;
 using BejView.Core.Logging;
 using BejView.Core.Text;
 
@@ -107,8 +108,11 @@ public static class SearchEngine
             throw new SearchException("The search text is empty.", "Type something to search for.");
 
         var sw = Stopwatch.StartNew();
-        var matcher = Matcher.Create(query, doc.Encoding);
-        var units = BuildUnits(doc, unitBytes, overlap);
+        // One index for the whole search: after a log rotation the document moves to the new file, but these units,
+        // their offsets and line numbers belong to this index's file and encoding.
+        var index = doc.Index;
+        var matcher = Matcher.Create(query, index.Encoding);
+        var units = BuildUnits(index, unitBytes, overlap);
         long searched = units.Count == 0 ? 0 : units[^1].End - units[0].Start;
         int p = Math.Max(1, parallelism ?? Environment.ProcessorCount);
         var hits = new List<SearchHit>(Math.Min(maxHits, 1024));
@@ -124,7 +128,7 @@ public static class SearchEngine
             bool collect = linesOnly || hits.Count < maxHits;
             int cap = linesOnly ? int.MaxValue : maxHits - hits.Count;
             Parallel.For(0, n, new ParallelOptions { MaxDegreeOfParallelism = p, CancellationToken = ct },
-                j => results[j] = SearchUnit(doc, units[b + j], matcher, collect ? cap : 0, linesOnly, buffers, ct));
+                j => results[j] = SearchUnit(index, units[b + j], matcher, collect ? cap : 0, linesOnly, buffers, ct));
 
             foreach (var r in results)
             {
@@ -160,9 +164,11 @@ public static class SearchEngine
 
     private sealed record UnitResult(List<SearchHit> Hits, long Count);
 
-    internal static List<Unit> BuildUnits(TextDocument doc, int unitBytes = UnitBytes, int overlap = Overlap)
+    internal static List<Unit> BuildUnits(TextDocument doc, int unitBytes = UnitBytes, int overlap = Overlap) =>
+        BuildUnits(doc.Index, unitBytes, overlap);
+
+    private static List<Unit> BuildUnits(LineIndex index, int unitBytes, int overlap)
     {
-        var index = doc.Index;
         long end = index.ScannedTo;
         long count = index.CheckpointCount;
         var units = new List<Unit>();
@@ -193,7 +199,7 @@ public static class SearchEngine
         public ArrayPool<char> Chars { get; } = ArrayPool<char>.Create(16 << 20, threads);
     }
 
-    private static UnitResult SearchUnit(TextDocument doc, Unit u, Matcher m, int cap, bool linesOnly, Buffers buffers, CancellationToken ct)
+    private static UnitResult SearchUnit(LineIndex index, Unit u, Matcher m, int cap, bool linesOnly, Buffers buffers, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         int own = (int)(u.End - u.Start);
@@ -201,10 +207,10 @@ public static class SearchEngine
         byte[] buffer = buffers.Bytes.Rent(own + extra);
         try
         {
-            int n = doc.Source.Read(u.Start, buffer.AsSpan(0, own + extra));
-            if (doc.Encoding.UnitSize == 2) n &= ~1;
+            int n = index.Source.Read(u.Start, buffer.AsSpan(0, own + extra));
+            if (index.Encoding.UnitSize == 2) n &= ~1;
             var hits = new List<SearchHit>();
-            long count = m.Search(buffer.AsSpan(0, n), Math.Min(own, n), u, doc.Encoding, hits, cap, linesOnly, buffers.Chars);
+            long count = m.Search(buffer.AsSpan(0, n), Math.Min(own, n), u, index.Encoding, hits, cap, linesOnly, buffers.Chars);
             return new UnitResult(hits, count);
         }
         finally
@@ -214,6 +220,8 @@ public static class SearchEngine
     }
 
     // ---- matchers ----
+
+    internal static string EndOfLineBeforeCr(string pattern) => Matcher.EndOfLineBeforeCr(pattern);
 
     private abstract class Matcher
     {
@@ -228,6 +236,45 @@ public static class SearchEngine
         /// </summary>
         public abstract long Search(ReadOnlySpan<byte> bytes, int own, Unit u, TextEncoding enc, List<SearchHit> hits, int cap, bool linesOnly, ArrayPool<char> chars);
 
+        /// <summary>
+        /// The text searched still holds each line's CR in a CRLF file, and .NET's <c>$</c> (Multiline) matches only
+        /// before LF, so <c>error$</c> found nothing in Windows logs. Every <c>$</c> that is an anchor (not escaped, not
+        /// inside a character class) becomes <c>(?=\r?$)</c>: the end of the line, before an optional CR.
+        /// </summary>
+        internal static string EndOfLineBeforeCr(string pattern)
+        {
+            if (!pattern.Contains('$')) return pattern;
+            var sb = new StringBuilder(pattern.Length + 16);
+            bool inClass = false;
+            for (int i = 0; i < pattern.Length; i++)
+            {
+                char c = pattern[i];
+                if (c == '\\' && i + 1 < pattern.Length)
+                {
+                    sb.Append(c).Append(pattern[++i]);
+                    continue;
+                }
+                if (inClass)
+                {
+                    if (c == ']') inClass = false;
+                    sb.Append(c);
+                    continue;
+                }
+                if (c == '[')
+                {
+                    inClass = true;
+                    sb.Append(c);
+                    // A ']' right after '[' or '[^' is a literal, not the end of the class.
+                    if (i + 1 < pattern.Length && pattern[i + 1] == '^') sb.Append(pattern[++i]);
+                    if (i + 1 < pattern.Length && pattern[i + 1] == ']') sb.Append(pattern[++i]);
+                    continue;
+                }
+                if (c == '$') sb.Append(@"(?=\r?$)");
+                else sb.Append(c);
+            }
+            return sb.ToString();
+        }
+
         public static Matcher Create(SearchQuery q, TextEncoding enc)
         {
             if (q.CaseSensitive && !q.IsRegex && !q.WholeWord && !q.Text.Contains('\n') &&
@@ -240,7 +287,7 @@ public static class SearchEngine
                 enc.Kind is TextEncodingKind.Utf8 or TextEncodingKind.Latin1)
                 return new ByteMatcher(Encoding.ASCII.GetBytes(q.Text), q.Text.Length, ignoreCase: true);
 
-            string pattern = q.IsRegex ? q.Text : Regex.Escape(q.Text);
+            string pattern = q.IsRegex ? EndOfLineBeforeCr(q.Text) : Regex.Escape(q.Text);
             if (q.WholeWord) pattern = $@"\b(?:{pattern})\b";
             var options = RegexOptions.CultureInvariant | RegexOptions.Multiline;
             if (!q.CaseSensitive) options |= RegexOptions.IgnoreCase;
@@ -289,6 +336,9 @@ public static class SearchEngine
             int lineStart = u.StartIsLineStart ? 0 : -1; // -1: the unit starts inside a line whose start we don't know
             int last = 0;
             int i = 0;
+            // The column is counted on from the previous hit on the same line, so many hits on one long line cost
+            // one pass over it (it was counted from the line start each time: hits x line length).
+            int colFrom = lineStart, colAt = 0;
             while (i < own)
             {
                 int rel = Find(bytes[i..]);
@@ -304,9 +354,17 @@ public static class SearchEngine
                     {
                         line += nls;
                         lineStart = last + gap.LastIndexOf((byte)'\n') + 1;
+                        colFrom = lineStart;
+                        colAt = 0;
                     }
                     last = at;
-                    int col = lineStart < 0 ? -1 : enc.Encoding.GetCharCount(bytes[lineStart..at]);
+                    int col = -1;
+                    if (lineStart >= 0)
+                    {
+                        col = colAt + enc.Encoding.GetCharCount(bytes[colFrom..at]);
+                        colFrom = at;
+                        colAt = col;
+                    }
                     hits.Add(new SearchHit(line, u.Start + at, needle.Length, col, charLength));
                 }
                 i = at + needle.Length;

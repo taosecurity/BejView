@@ -40,6 +40,10 @@ public sealed class LineIndex
     /// <summary>The file this index was built from (in follow mode the document can move on to a new file).</summary>
     public FileSource Source => _src;
     private readonly TextEncoding _enc;
+
+    /// <summary>The encoding this index was built with (it goes with <see cref="Source"/>; after a log rotation the
+    /// document's own encoding can already be the new file's).</summary>
+    public TextEncoding Encoding => _enc;
     private readonly int _readBlock;
     private readonly object _lock = new();
 

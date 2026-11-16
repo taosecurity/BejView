@@ -72,7 +72,7 @@ switch ($Step) {
         Say ($(if ($cmd.Source -like '*\Microsoft\WindowsApps\*') { 'OK  ' } else { 'FAIL' }) + "  bejview is $($cmd.Source) (expected the Store alias in ...\Microsoft\WindowsApps)")
 
         $v = & bejview --version
-        Say ($(if ($LASTEXITCODE -eq 0 -and "$v" -like 'BejView 2.0.0*') { 'OK  ' } else { 'FAIL' }) + "  bejview --version -> '$v' (exit $LASTEXITCODE)")
+        Say ($(if ($LASTEXITCODE -eq 0 -and "$v" -like 'BejView 2.0.1*') { 'OK  ' } else { 'FAIL' }) + "  bejview --version -> '$v' (exit $LASTEXITCODE)")
 
         $sample = Join-Path $here 'msix-test-sample.log'
         Set-Content -Path $sample -Value @('one', 'two ERROR here', 'three', 'ERROR again') -Encoding utf8
