@@ -22,9 +22,9 @@ Windows, any one of these:
 # a) The release zip, extracted to a folder of your choice
 Invoke-WebRequest https://github.com/taosecurity/BejView/releases/download/v2.0.1/BejView-2.0.1-win-x64.zip -OutFile BejView.zip
 Expand-Archive BejView.zip -DestinationPath "$env:LOCALAPPDATA\BejView-app"
-# b) WinGet, once the package is accepted (adds the "bejview" command to PATH)
+# b) WinGet: the taosecurity.BejView package is still waiting for review (checked 2026-11-20); once accepted it adds the "bejview" command to PATH
 winget install taosecurity.BejView
-# c) The Microsoft Store version, once certified
+# c) The Microsoft Store version (2.0.1, live in the Store since 2026-11-16)
 winget install --id 9PMXP946XKN3 --source msstore
 ```
 

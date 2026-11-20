@@ -1,10 +1,12 @@
 # BejView
 
-**View and search very large text files on Windows and Linux.** BejView opens logs and dumps of many gigabytes at once, searches them in seconds, follows a log while a program is still writing it, and never changes the file.
+BejView lets you view and search very large text files on Windows and Linux. It opens logs and dumps of many gigabytes at once, searches them in seconds, follows a log while a program is still writing it, and never changes the file.
 
 It has been tested with a 49.5 GB file of more than a billion lines. On a 30 GB file it uses under 100 MB of memory and shows the first screen in under a second (benchmark below).
 
-For AI assistants: see [AGENTS.md](AGENTS.md).
+What's new: see the [latest release](https://github.com/taosecurity/BejView/releases/latest) and [CHANGELOG.md](CHANGELOG.md).
+
+For AI assistants: step-by-step instructions are in [AGENTS.md](AGENTS.md).
 
 ## Try it
 
@@ -26,6 +28,34 @@ cd BejView-2.0.1-linux-x64
 
 Nothing else needs installing: each download carries its own .NET runtime.
 
+## Example
+
+Here is how you might check a big log that a program is still writing:
+
+1. Drag the log file onto the BejView window. The first screen shows at once while BejView counts the lines in the background.
+2. Press **Ctrl+L** to follow the end of the file. New lines appear as the program writes them, like `tail -f`. (From a terminal, `bejview big.log --follow` opens the file and follows it in one step.)
+3. Press **Ctrl+F**, type `error` and press Enter. BejView counts every match and lists them. F3 and Shift+F3 step through them.
+4. Press **Ctrl+G** and type `50%` to jump to the middle of the file, a line number such as `12345`, or a byte offset such as `@1048576`.
+
+The terminal commands print their answers instead of opening a window. This is the real output of the 2.0.1 Windows zip, run in its folder on the `LICENSE.txt` file that comes with it:
+
+    > .\BejView --version
+    BejView 2.0.1
+
+    > .\BejView find LICENSE.txt software
+    6:9: of this software and associated documentation files (the "Software"), to deal
+    7:8: in the Software without restriction, including without limitation the rights
+    9:15: copies of the Software, and to permit persons to whom the Software is
+    13:39: copies or substantial portions of the Software.
+    15:5: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    20:34: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    21:1: SOFTWARE.
+
+    > .\BejView find LICENSE.txt software --count
+    9
+
+Each `find` line is `LINE:COLUMN: text`. The search ignores case unless you add `--case`, and `--count` counts every match, including the two on line 9.
+
 ## What it does
 
 - **Opens huge files at once.** The first screen shows straight away while BejView counts the lines in the background. Memory stays small because the file is read from disk, never loaded whole.
@@ -44,8 +74,8 @@ Nothing else needs installing: each download carries its own .NET runtime.
 | Where | How | Notes |
 |---|---|---|
 | Windows zip | Extract `BejView-<version>-win-x64.zip` anywhere and run `BejView.exe`. | Windows 10 (2004) or later, x64. The zip isn't signed, so the first start may show "Windows protected your PC": click **More info**, then **Run anyway**. |
-| Microsoft Store | [BejView in the Microsoft Store](https://apps.microsoft.com/detail/9PMXP946XKN3) (once Microsoft has certified it). | Signed by Microsoft; updates itself. Adds the `bejview` command to every terminal. |
-| WinGet | `winget install taosecurity.BejView` (once the package is accepted), or `winget install --id 9PMXP946XKN3 --source msstore` for the Store version. | The WinGet package uses `BejView-<version>-win-x64-winget.zip` and adds the `bejview` command. |
+| Microsoft Store | [BejView in the Microsoft Store](https://apps.microsoft.com/detail/9PMXP946XKN3). Version 2.0.1 has been live there since 2026-11-16. | Signed by Microsoft; updates itself. Adds the `bejview` command to every terminal. |
+| WinGet | `winget install --id 9PMXP946XKN3 --source msstore` installs the Store version. The `taosecurity.BejView` package is still waiting for review by the WinGet team (checked 2026-11-20), so `winget install taosecurity.BejView` works only after it is accepted. | The WinGet package uses `BejView-<version>-win-x64-winget.zip` and adds the `bejview` command. |
 | Linux | Unpack `BejView-<version>-linux-x64.tar.gz` (or `-linux-arm64`) and run `./bejview`. `./install.sh` adds it to your app menu with its icon (into `~/.local`, no sudo); `./install.sh --uninstall` removes it. | Needs a desktop session. It draws natively on Wayland (made for KDE Plasma 6) and falls back to X11. `BEJVIEW_X11=1 ./bejview` forces X11. |
 
 Every release lists SHA-256 hashes in `SHA256SUMS` and carries a GitHub build attestation. To check a download:
@@ -152,7 +182,7 @@ What BejView promises (it only reads, has no network access, and keeps a file's 
 
 ## License
 
-MIT; see [LICENSE](LICENSE).
+BejView is released under the MIT License; see [LICENSE](LICENSE).
 
 ## Credits
 

@@ -2,16 +2,39 @@
 
 ## 2.0.1 (2026-11-16)
 
-Bug fixes from a code review of the 2.0.0 source.
+### What's new
+
+BejView 2.0.1 fixes the bugs found in a code review of the 2.0.0 source. The biggest fixes are for regular-expression searches in Windows (CRLF) files and for following logs that are rotated or rewritten.
+
+### Example
+
+    > .\BejView --version
+    BejView 2.0.1
+
+    > .\BejView find LICENSE.txt software --count
+    9
+
+In the window, open a log, press Ctrl+L to follow its end like `tail -f`, and press Ctrl+F to search it.
+
+### Fixes
 
 - Regex searches with `$` (end of line) now find matches in Windows (CRLF) files, such as most game and Vortex logs.
-- Follow mode: a log that is rotated but starts with the same long header every time is now followed to the new file; a file opened empty and later rewritten in place is read again; the Filter pane is cleared when the file is read again, instead of listing the old file's line numbers.
+- Follow mode: a log that is rotated but starts with the same long header every time is now followed to the new file.
+- Follow mode: a file opened empty and later rewritten in place is read again.
+- Follow mode: the Filter pane is cleared when the file is read again, instead of listing the old file's line numbers.
 - A search, or Save selection, that runs while a followed log is rotated reads the file it started on, not the new one at the old offsets.
-- Follow mode no longer can stop drawing when a line over 64 KB is cut short under it.
+- Follow mode can no longer stop drawing when a line over 64 KB is cut short under it.
 - `--encoding` applies to the file given on the command line only; files opened later are detected again.
 - Closing a tab, or changing its encoding, while follow mode is reading no longer logs an "Unexpected background error".
 - A Go to that was waiting for indexing is no longer dropped silently when indexing stops: BejView goes to the last line read and says so.
-- Faster column numbers when one long line has many search hits.
+- Column numbers are faster when one long line has many search hits.
+
+### Download
+
+- Windows (x64): `BejView-2.0.1-win-x64.zip`. Extract it anywhere and run `BejView.exe`. The `-winget.zip` is the same build laid out for WinGet.
+- Linux: `BejView-2.0.1-linux-x64.tar.gz` or `-linux-arm64.tar.gz`, then run `./bejview`.
+
+To check a download, run `sha256sum -c SHA256SUMS --ignore-missing` (Linux) or `Get-FileHash <file>` (Windows, then compare with SHA256SUMS), and `gh attestation verify <file> -R taosecurity/BejView`. The Windows exe isn't code-signed, but the Microsoft Store version is.
 
 ## 2.0.0 (2026-11-14)
 
